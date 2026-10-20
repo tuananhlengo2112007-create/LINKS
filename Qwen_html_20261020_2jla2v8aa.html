@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>📚 Link Manager</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --panel-2: #334155;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #6366f1;
+    --accent-2: #8b5cf6;
+    --danger: #ef4444;
+    --success: #10b981;
+    --border: #334155;
+  }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    background: rgba(30, 41, 59, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  header h1 {
+    font-size: 20px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-right: auto;
+  }
+  .search-box {
+    flex: 1;
+    min-width: 220px;
+    position: relative;
+  }
+  .search-box input {
+    width: 100%;
+    padding: 10px 14px 10px 38px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    outline: none;
+    transition: 0.2s;
+  }
+  .search-box input:focus { border-color: var(--accent); }
+  .search-box::before {
+    content: "🔍";
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.6;
+  }
+  .btn {
+    padding: 9px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+    transition: 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-primary { background: linear-gradient(90deg, var(--accent), var(--accent-2)); color: white; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.4); }
+  .btn-secondary { background: var(--panel-2); color: var(--text); }
+  .btn-secondary:hover { background: #475569; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-danger:hover { background: #dc2626; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  main {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    flex: 1;
+    overflow: hidden;
+  }
+  aside {
+    background: rgba(30, 41, 59, 0.6);
+    border-right: 1px solid var(--border);
+    padding: 16px;
+    overflow-y: auto;
+  }
+  aside h3 {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+  }
+  .cat-list { list-style: none; margin-bottom: 20px; }
+  .cat-item {
+    padding: 10px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: 0.15s;
+    margin-bottom: 3px;
+  }
+  .cat-item:hover { background: var(--panel-2); }
+  .cat-item.active {
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    color: white;
+  }
+  .cat-item .count {
+    background: rgba(0,0,0,0.25);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+  }
+  .cat-item .del-cat {
+    opacity: 0;
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 4px;
+  }
+  .cat-item:hover .del-cat { opacity: 0.7; }
+  .cat-item .del-cat:hover { opacity: 1; color: var(--danger); }
+
+  .add-cat {
+    display: flex;
+    gap: 6px;
+  }
+  .add-cat input {
+    flex: 1;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    outline: none;
+    font-size: 13px;
+  }
+
+  .tag-filter {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .tag-chip {
+    padding: 3px 10px;
+    background: var(--panel-2);
+    border-radius: 12px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+  .tag-chip:hover { background: var(--accent); }
+  .tag-chip.active { background: var(--accent); color: white; }
+
+  section {
+    padding: 20px 24px;
+    overflow-y: auto;
+  }
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .toolbar h2 { font-size: 18px; }
+  .link-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+  .link-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    cursor: pointer;
+    transition: 0.2s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .link-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    box-shadow: 0 8px 24px rgba(99,102,241,0.2);
+  }
+  .link-card h4 {
+    font-size: 15px;
+    color: var(--text);
+    padding-right: 50px;
+  }
+  .link-card p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+    flex: 1;
+  }
+  .link-card .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+  }
+  .link-card .tags span {
+    background: rgba(99,102,241,0.2);
+    color: #a5b4fc;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+  }
+  .link-card .actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: 0.15s;
+  }
+  .link-card:hover .actions { opacity: 1; }
+  .icon-btn {
+    background: var(--panel-2);
+    border: none;
+    color: var(--text);
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .icon-btn:hover { background: var(--accent); }
+  .icon-btn.del:hover { background: var(--danger); }
+
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty .icon { font-size: 48px; margin-bottom: 10px; }
+
+  /* Modal */
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    backdrop-filter: blur(4px);
+  }
+  .modal-bg.show { display: flex; }
+  .modal {
+    background: var(--panel);
+    border-radius: 12px;
+    padding: 24px;
+    width: 90%;
+    max-width: 480px;
+    border: 1px solid var(--border);
+  }
+  .modal h3 { margin-bottom: 16px; }
+  .form-group { margin-bottom: 14px; }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    font-family: inherit;
+    font-size: 14px;
+  }
+  .form-group textarea { resize: vertical; min-height: 70px; }
+  .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+    border-color: var(--accent);
+  }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .hint {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  @media (max-width: 768px) {
+    main { grid-template-columns: 1fr; }
+    aside { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📚 Link Manager</h1>
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Tìm theo tiêu đề, mô tả, tag..." />
+  </div>
+  <button class="btn btn-secondary" onclick="importData()">📥 Nhập JSON</button>
+  <button class="btn btn-secondary" onclick="exportData()">📤 Xuất JSON</button>
+  <button class="btn btn-primary" onclick="openLinkModal()">➕ Thêm link</button>
+</header>
+
+<main>
+  <aside>
+    <h3>Chủ đề</h3>
+    <ul class="cat-list" id="catList"></ul>
+    <div class="add-cat">
+      <input type="text" id="newCatInput" placeholder="Chủ đề mới..." />
+      <button class="btn btn-primary btn-sm" onclick="addCategory()">+</button>
+    </div>
+
+    <h3 style="margin-top:20px;">Lọc theo tag</h3>
+    <div class="tag-filter" id="tagFilter"></div>
+  </aside>
+
+  <section>
+    <div class="toolbar">
+      <h2 id="currentCatTitle">Tất cả</h2>
+      <span id="countInfo" style="color:var(--muted); font-size:13px;"></span>
+    </div>
+    <div class="link-grid" id="linkGrid"></div>
+  </section>
+</main>
+
+<!-- Modal thêm/sửa link -->
+<div class="modal-bg" id="linkModal">
+  <div class="modal">
+    <h3 id="linkModalTitle">Thêm link mới</h3>
+    <div class="form-group">
+      <label>Tiêu đề *</label>
+      <input type="text" id="f_title" placeholder="VD: Tài liệu MAE101" />
+    </div>
+    <div class="form-group">
+      <label>URL *</label>
+      <input type="text" id="f_url" placeholder="https://..." />
+    </div>
+    <div class="form-group">
+      <label>Mô tả / Tác dụng</label>
+      <textarea id="f_desc" placeholder="Link này dùng để làm gì..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>Chủ đề</label>
+      <select id="f_cat"></select>
+    </div>
+    <div class="form-group">
+      <label>Tag</label>
+      <input type="text" id="f_tags" placeholder="tag1, tag2, tag3" />
+      <div class="hint">Các tag cách nhau bởi dấu phẩy</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeLinkModal()">Hủy</button>
+      <button class="btn btn-primary" onclick="saveLink()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept=".json" style="display:none" />
+
+<script>
+/* ============== DATA ============== */
+const STORAGE_KEY = 'link_manager_data_v1';
+let data = {
+  categories: ['MAE101', 'MAS', 'Lập trình', 'AI'],
+  links: []
+};
+let state = {
+  currentCat: 'all',      // 'all' hoặc tên category
+  currentTag: null,
+  search: '',
+  editingId: null
+};
+
+function loadData() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    try { data = JSON.parse(raw); } catch(e) { console.error(e); }
+  }
+  if (!data.categories) data.categories = [];
+  if (!data.links) data.links = [];
+}
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+/* ============== RENDER ============== */
+function render() {
+  renderCategories();
+  renderTagFilter();
+  renderLinks();
+  renderCatSelect();
+}
+
+function renderCategories() {
+  const list = document.getElementById('catList');
+  const allCount = data.links.length;
+  let html = `<li class="cat-item ${state.currentCat==='all'?'active':''}" onclick="selectCat('all')">
+    <span>📋 Tất cả</span><span class="count">${allCount}</span>
+  </li>`;
+  data.categories.forEach(cat => {
+    const count = data.links.filter(l => l.categoryId === cat).length;
+    html += `<li class="cat-item ${state.currentCat===cat?'active':''}" onclick="selectCat('${escapeAttr(cat)}')">
+      <span>📁 ${escapeHtml(cat)}</span>
+      <span style="display:flex; align-items:center; gap:6px;">
+        <span class="count">${count}</span>
+        <button class="del-cat" onclick="event.stopPropagation(); deleteCategory('${escapeAttr(cat)}')" title="Xóa chủ đề">✕</button>
+      </span>
+    </li>`;
+  });
+  list.innerHTML = html;
+  document.getElementById('currentCatTitle').textContent =
+    state.currentCat === 'all' ? 'Tất cả' : '📁 ' + state.currentCat;
+}
+
+function renderTagFilter() {
+  const tagSet = new Set();
+  data.links.forEach(l => (l.tags||[]).forEach(t => tagSet.add(t)));
+  const tags = [...tagSet].sort();
+  const el = document.getElementById('tagFilter');
+  if (tags.length === 0) {
+    el.innerHTML = '<span style="color:var(--muted); font-size:12px;">Chưa có tag</span>';
+    return;
+  }
+  el.innerHTML = tags.map(t =>
+    `<span class="tag-chip ${state.currentTag===t?'active':''}" onclick="toggleTag('${escapeAttr(t)}')">#${escapeHtml(t)}</span>`
+  ).join('');
+}
+
+function renderLinks() {
+  const grid = document.getElementById('linkGrid');
+  let list = data.links.slice();
+
+  if (state.currentCat !== 'all') {
+    list = list.filter(l => l.categoryId === state.currentCat);
+  }
+  if (state.currentTag) {
+    list = list.filter(l => (l.tags||[]).includes(state.currentTag));
+  }
+  if (state.search.trim()) {
+    const q = state.search.toLowerCase();
+    list = list.filter(l =>
+      (l.title||'').toLowerCase().includes(q) ||
+      (l.description||'').toLowerCase().includes(q) ||
+      (l.tags||[]).some(t => t.toLowerCase().includes(q))
+    );
+  }
+
+  list.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+
+  document.getElementById('countInfo').textContent = `${list.length} link`;
+
+  if (list.length === 0) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
+      <div class="icon">📭</div>
+      <div>Chưa có link nào. Bấm "Thêm link" để bắt đầu!</div>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(l => `
+    <div class="link-card" onclick="openLink('${escapeAttr(l.url)}')">
+      <div class="actions">
+        <button class="icon-btn" onclick="event.stopPropagation(); editLink('${l.id}')" title="Sửa">✏️</button>
+        <button class="icon-btn del" onclick="event.stopPropagation(); deleteLink('${l.id}')" title="Xóa">🗑️</button>
+      </div>
+      <h4>${escapeHtml(l.title)}</h4>
+      <p>${escapeHtml(l.description || '—')}</p>
+      <div class="tags">
+        ${(l.tags||[]).map(t => `<span>#${escapeHtml(t)}</span>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderCatSelect() {
+  const sel = document.getElementById('f_cat');
+  sel.innerHTML = data.categories.map(c =>
+    `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`
+  ).join('');
+}
+
+/* ============== ACTIONS ============== */
+function selectCat(cat) {
+  state.currentCat = cat;
+  render();
+}
+function toggleTag(tag) {
+  state.currentTag = state.currentTag === tag ? null : tag;
+  render();
+}
+function addCategory() {
+  const input = document.getElementById('newCatInput');
+  const name = input.value.trim();
+  if (!name) return;
+  if (data.categories.includes(name)) {
+    alert('Chủ đề đã tồn tại!');
+    return;
+  }
+  data.categories.push(name);
+  input.value = '';
+  saveData();
+  render();
+}
+function deleteCategory(cat) {
+  const count = data.links.filter(l => l.categoryId === cat).length;
+  if (count > 0) {
+    if (!confirm(`Chủ đề "${cat}" đang có ${count} link. Xóa chủ đề sẽ KHÔNG xóa link (chúng sẽ mất chủ đề). Tiếp tục?`)) return;
+  }
+  data.categories = data.categories.filter(c => c !== cat);
+  data.links.forEach(l => { if (l.categoryId === cat) l.categoryId = ''; });
+  if (state.currentCat === cat) state.currentCat = 'all';
+  saveData();
+  render();
+}
+
+function openLinkModal() {
+  state.editingId = null;
+  document.getElementById('linkModalTitle').textContent = 'Thêm link mới';
+  document.getElementById('f_title').value = '';
+  document.getElementById('f_url').value = '';
+  document.getElementById('f_desc').value = '';
+  document.getElementById('f_tags').value = '';
+  renderCatSelect();
+  document.getElementById('f_cat').value = state.currentCat !== 'all' ? state.currentCat : (data.categories[0] || '');
+  document.getElementById('linkModal').classList.add('show');
+}
+function closeLinkModal() {
+  document.getElementById('linkModal').classList.remove('show');
+}
+function editLink(id) {
+  const l = data.links.find(x => x.id === id);
+  if (!l) return;
+  state.editingId = id;
+  document.getElementById('linkModalTitle').textContent = 'Sửa link';
+  document.getElementById('f_title').value = l.title || '';
+  document.getElementById('f_url').value = l.url || '';
+  document.getElementById('f_desc').value = l.description || '';
+  document.getElementById('f_tags').value = (l.tags||[]).join(', ');
+  renderCatSelect();
+  document.getElementById('f_cat').value = l.categoryId || '';
+  document.getElementById('linkModal').classList.add('show');
+}
+function saveLink() {
+  const title = document.getElementById('f_title').value.trim();
+  let url = document.getElementById('f_url').value.trim();
+  const desc = document.getElementById('f_desc').value.trim();
+  const cat = document.getElementById('f_cat').value;
+  const tags = document.getElementById('f_tags').value
+    .split(',').map(s => s.trim()).filter(Boolean);
+
+  if (!title || !url) {
+    alert('Vui lòng nhập Tiêu đề và URL!');
+    return;
+  }
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+
+  if (state.editingId) {
+    const l = data.links.find(x => x.id === state.editingId);
+    Object.assign(l, { title, url, description: desc, categoryId: cat, tags });
+  } else {
+    data.links.push({
+      id: 'l_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      title, url, description: desc, categoryId: cat, tags,
+      createdAt: Date.now()
+    });
+  }
+  saveData();
+  closeLinkModal();
+  render();
+}
+function deleteLink(id) {
+  if (!confirm('Xóa link này?')) return;
+  data.links = data.links.filter(l => l.id !== id);
+  saveData();
+  render();
+}
+function openLink(url) {
+  window.open(url, '_blank', 'noopener');
+}
+
+/* ============== SEARCH ============== */
+document.getElementById('searchInput').addEventListener('input', e => {
+  state.search = e.target.value;
+  renderLinks();
+});
+
+/* ============== IMPORT / EXPORT ============== */
+function exportData() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `links_backup_${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function importData() {
+  document.getElementById('fileInput').click();
+}
+document.getElementById('fileInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (!imported.categories || !imported.links) throw new Error('Format không hợp lệ');
+      const mode = confirm('OK = Gộp với dữ liệu hiện tại\nCancel = Ghi đè hoàn toàn');
+      if (mode) {
+        // Merge
+        const existCats = new Set(data.categories);
+        imported.categories.forEach(c => { if (!existCats.has(c)) data.categories.push(c); });
+        const existIds = new Set(data.links.map(l => l.id));
+        imported.links.forEach(l => {
+          if (!existIds.has(l.id)) data.links.push(l);
+        });
+      } else {
+        data = imported;
+      }
+      saveData();
+      render();
+      alert('✅ Nhập thành công!');
+    } catch(err) {
+      alert('❌ Lỗi: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+/* ============== UTIL ============== */
+function escapeHtml(s) {
+  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(s) {
+  return String(s||'').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+/* ============== INIT ============== */
+loadData();
+render();
+</script>
+</body>
+</html>
